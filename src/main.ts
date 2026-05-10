@@ -7,6 +7,7 @@ import { ShutdownService } from './common/services/shutdown.service';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { json, urlencoded } from 'express';
 
 // Configuration loading order (later sources do NOT override earlier ones):
 //   1. Process env (Docker, shell, systemd) — highest priority
@@ -66,6 +67,11 @@ STORAGE_PATH=./data/media
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Configure body parser limits to allow large file uploads
+  const bodyLimit = process.env.MAX_BODY_SIZE || process.env.BODY_LIMIT || '50mb';
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ extended: true, limit: bodyLimit }));
 
   // Enable shutdown hooks for graceful shutdown
   app.enableShutdownHooks();
